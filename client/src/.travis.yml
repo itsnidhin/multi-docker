@@ -1,0 +1,23 @@
+sudo: required
+services:
+    - docker
+before_install:
+    - docker build -t itsnidhin/docker-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run itsnidhin/docker-test npm test -- --coverage
+
+after_success:
+    #build prod images
+    - docker build -t itsnidhin/multi-client ./client
+    - docker build -t itsnidhin/multi-nginx ./nginx
+    - docker build -t itsnidhin/multi-server ./server
+    - docker build -t itsnidhin/multi-worker ./worker
+
+    #login to docker
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    #push images to docker hub
+    - docker push itsnidhin/multi-client
+    - docker push itsnidhin/multi-nginx
+    - docker push itsnidhin/multi-server
+    - docker push itsnidhin/multi-worker
